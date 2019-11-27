@@ -2,6 +2,7 @@ package server;
 
 import java.net.*;
 import java.io.*;
+import helpers.FileHelper;
 
 public class ClientConnection {
     // client info
@@ -57,18 +58,10 @@ public class ClientConnection {
     public void sendFile(String fileName) {
         try {
             File file = new File(fileName);
-            FileInputStream fileInputStream = new FileInputStream(file);
             long fileSize = file.length();
             dataOutputStream.writeUTF(fileName);
             dataOutputStream.writeLong(fileSize);
-            // Send file
-            byte[] buffer = new byte[bufferSize];
-            int nBytes;
-            while ((nBytes = fileInputStream.read(buffer)) != -1) {
-                outputStream.write(buffer, 0, nBytes);
-            }
-            outputStream.flush();
-            fileInputStream.close();
+            FileHelper.sendFile(dataOutputStream, fileName);
         } catch (IOException e) {
             System.out.println("Something went wrong when send file");
         }
