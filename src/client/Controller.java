@@ -1,10 +1,10 @@
 package client;
 
 import helpers.FileHelper;
-
+import helpers.MessageControlHelper;
+import helpers.MessageControlHelper.*;
 import java.net.*;
 import java.io.*;
-import java.sql.Array;
 import java.util.ArrayList;
 import java.util.Arrays;
 
@@ -76,19 +76,16 @@ public class Controller {
         DataOutputStream c3OutputStream = new DataOutputStream(c3.getOutputStream());
 
         while (true) {
-            // forward file name
-            String fileName = dataInputStream.readUTF();
-            c2OutputStream.writeUTF(fileName);
-            c3OutputStream.writeUTF(fileName);
-            // forward file size
-            long fileSize = dataInputStream.readLong();
-            c2OutputStream.writeLong(fileSize);
-            c3OutputStream.writeLong(fileSize);
+            // forward file info
+            FileInfo fileInfo = MessageControlHelper.receiveFileInfo(dataInputStream);
+            System.out.println("Forwarder: " + fileInfo.fileName + " " + fileInfo.fileSize);
+            MessageControlHelper.sendFileInfo(c2OutputStream, fileInfo);
+            MessageControlHelper.sendFileInfo(c3OutputStream, fileInfo);
             // Receive and Forward file
-            FileHelper.forwardFile(dataInputStream, new ArrayList<>(Arrays.asList(c2OutputStream, c3OutputStream)), "./c1/" + fileName, fileSize);
+            FileHelper.forwardFile(dataInputStream, new ArrayList<>(Arrays.asList(c2OutputStream, c3OutputStream)), "./c1/" + fileInfo.fileName, fileInfo.fileSize);
             long finishTime = System.currentTimeMillis();
             dataOutputStream.writeLong(finishTime);
-            System.out.println("Receive file " + fileName + " successfully.");
+            System.out.println("Receive file " + fileInfo.fileName + " successfully.");
         }
     }
 
@@ -98,16 +95,13 @@ public class Controller {
         System.out.println("Connected to C1 at " + clientAddress[0].getIp() + ":9000");
         DataInputStream c1InputStream = new DataInputStream(c1.getInputStream());
         while (true) {
-            // receive file name
-            String fileName = c1InputStream.readUTF();
-            // receive file size
-            long fileSize = c1InputStream.readLong();
-            // Receive file
-            String filepath = "./c" + id + "/" + fileName;
-            FileHelper.receiveFile(c1InputStream, filepath, fileSize);
+            FileInfo fileInfo = MessageControlHelper.receiveFileInfo(c1InputStream);
+            System.out.println("Receiver" + fileInfo.fileName + fileInfo.fileSize);
+            String filepath = "./c" + id + "/" + fileInfo.fileName;
+            FileHelper.receiveFile(c1InputStream, filepath, fileInfo.fileSize);
             long finishTime = System.currentTimeMillis();
             dataOutputStream.writeLong(finishTime);
-            System.out.println("Receive file " + fileName + " successfully.");
+            System.out.println("Receive file " + fileInfo.fileName + " successfully.");
         }
     }
 }

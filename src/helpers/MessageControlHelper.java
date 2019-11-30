@@ -16,12 +16,34 @@ public class MessageControlHelper {
         return new ArrayList<>();
     }
 
-    public static void sendFileInfo(DataOutputStream outSocket, String fileName, String fileSize) {
+    public static class FileInfo {
+        public final String fileName;
+        public final long fileSize;
 
+        public FileInfo(String fileName, long fileSize) {
+            this.fileName = fileName;
+            this.fileSize = fileSize;
+        }
     }
 
-    public static void receiveFileInfo(DataInputStream inpSocket) {
+    public static void sendFileInfo(DataOutputStream outSocket, FileInfo fileInfo) throws IOException {
+        try{
+           outSocket.writeUTF(fileInfo.fileName);
+           outSocket.writeLong(fileInfo.fileSize);
+        }catch(IOException e){
+            e.printStackTrace();
+        }
+    }
 
+    public static FileInfo receiveFileInfo(DataInputStream inpSocket) throws IOException {
+        try {
+            String fileName= inpSocket.readUTF();
+            long fileSize = inpSocket.readLong();
+            return new FileInfo(fileName, fileSize);
+        }catch (IOException e) {
+            e.printStackTrace();
+            return null;
+        }
     }
 
     public static void sendForwarderNotify(DataOutputStream outSocket, String forwarderIp) throws IOException {

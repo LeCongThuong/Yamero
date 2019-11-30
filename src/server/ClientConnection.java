@@ -3,6 +3,7 @@ package server;
 import java.net.*;
 import java.io.*;
 import helpers.FileHelper;
+import helpers.MessageControlHelper;
 
 public class ClientConnection {
     // client info
@@ -59,8 +60,7 @@ public class ClientConnection {
         try {
             File file = new File(fileName);
             long fileSize = file.length();
-            dataOutputStream.writeUTF(fileName);
-            dataOutputStream.writeLong(fileSize);
+            MessageControlHelper.sendFileInfo(dataOutputStream, new MessageControlHelper.FileInfo(fileName, fileSize));
             FileHelper.sendFile(dataOutputStream, fileName);
         } catch (IOException e) {
             System.out.println("Something went wrong when send file");
