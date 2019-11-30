@@ -110,7 +110,7 @@ public class FileHelper {
 
         private boolean queueNotEmpty() {
             synchronized (this.mQueue) {
-                return this.mQueue.size() == 0;
+                return this.mQueue.size() > 0;
             }
         }
 
