@@ -7,6 +7,7 @@ import java.net.*;
 import java.io.*;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.net.ConnectException;
 
 public class Controller {
     // client info
@@ -25,11 +26,11 @@ public class Controller {
     private static OutputStream outputStream = null;
     private static DataOutputStream dataOutputStream = null;
 
+
     public static void main(String[] args) {
         try {
-            InetAddress serverAddress = InetAddress.getByName(serverIp);
-            Socket socket = new Socket(serverAddress, serverPort);
-
+            //connect to server
+            Socket socket = connectionHandle(serverIp, serverPort);
             // Input init
             inputStream = socket.getInputStream();
             dataInputStream = new DataInputStream(inputStream);
@@ -90,7 +91,8 @@ public class Controller {
     }
 
     private static void executeAsNormalClient() throws IOException {
-        Socket c1 = new Socket(clientAddress[0].getIp(), 9000);
+
+        Socket c1 = connectionHandle(clientAddress[0].getIp(), 9000);
         dataOutputStream.writeBoolean(true);
         System.out.println("Connected to C1 at " + clientAddress[0].getIp() + ":9000");
         DataInputStream c1InputStream = new DataInputStream(c1.getInputStream());
@@ -103,5 +105,27 @@ public class Controller {
             dataOutputStream.writeLong(finishTime);
             System.out.println("Receive file " + fileInfo.fileName + " successfully.");
         }
+    }
+
+    private static Socket connectionHandle(String targetIp, int port) throws IOException {
+        InetAddress serverAddress = InetAddress.getByName(targetIp);
+        boolean isSuccessConnection = true;
+        while(!isSuccessConnection){
+            try{
+                Socket socket = new Socket(targetIp, port);
+                isSuccessConnection = false;
+                return socket;
+            }
+            catch(ConnectException e){
+                System.out.println("Connect failed, waiting and trying again");
+                try{
+                    Thread.sleep(1000);
+                }
+                catch(InterruptedException ie){
+                    ie.printStackTrace();
+                }
+            }
+        }
+        return null;
     }
 }
