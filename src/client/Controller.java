@@ -110,14 +110,15 @@ public class Controller {
 
     private static Socket connectionHandle(String targetIp, int port) throws IOException {
         InetAddress serverAddress = InetAddress.getByName(targetIp);
-        boolean isSuccessConnection = true;
+        boolean isSuccessConnection = false;
         while(!isSuccessConnection){
             try{
                 Socket socket = new Socket(targetIp, port);
-                isSuccessConnection = false;
+                isSuccessConnection = true;
+                System.out.println(socket.toString());
                 return socket;
             }
-            catch(ConnectException e){
+            catch (ConnectException e){
                 System.out.println("Connect failed, waiting and trying again");
                 try{
                     Thread.sleep(1000);
