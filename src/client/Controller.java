@@ -15,7 +15,8 @@ public class Controller {
 
     // server info
     private static final int serverPort = 9090;
-    private static final String serverIp = "127.0.0.1";
+//    private static final String serverIp = "127.0.0.1";
+    private static final String serverIp = "192.168.2.2";
 
     // input utils
     private static InputStream inputStream = null;

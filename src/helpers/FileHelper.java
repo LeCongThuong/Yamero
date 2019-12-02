@@ -7,6 +7,7 @@ public class FileHelper {
     private static int bufferSize = 1024;
 
     public static int sendFile(DataOutputStream outSocket, String filepath) throws IOException {
+        System.out.println("FileHelper sending file: " + filepath);
         try {
             File file = new File(filepath);
             FileInputStream fileInputStream = new FileInputStream(file);
@@ -18,6 +19,7 @@ public class FileHelper {
             outSocket.flush();
             fileInputStream.close();
         } catch (FileNotFoundException e) {
+            e.printStackTrace();
             return -1;
         }
         return 0;
@@ -28,7 +30,7 @@ public class FileHelper {
     }
 
     public static int receiveFile(DataInputStream inpSocket, String filepath, long fileSize) throws IOException {
-        System.out.println("FileHelper sending file: " + filepath);
+        System.out.println("FileHelper receiving file: " + filepath);
         try {
             FileOutputStream fileOutputStream = new FileOutputStream(filepath);
             byte[] buffer = new byte[bufferSize];
@@ -39,20 +41,33 @@ public class FileHelper {
                 totalBytesRead += nBytes;
             }
         } catch (FileNotFoundException e) {
+            e.printStackTrace();
             return -1;
         }
         return 0;
     }
 
     public static int forwardFile(DataInputStream inpSocket, ArrayList<DataOutputStream> forwardingSockets, String filepath, long fileSize) throws IOException {
+        System.out.println("FileHelper receiving and forwarding file: " + filepath);
         // create threads to forward file through forwardingSockets
-        ArrayList<Forwarder> forwarderThreads = new ArrayList<>();
+        ArrayList<QueueThread> forwarderThreads = new ArrayList<>();
         FileOutputStream fileOutputStream;
 
         try {
             fileOutputStream = new FileOutputStream(filepath);
             for (DataOutputStream forwardingSocket: forwardingSockets) {
-                Forwarder forwarder = new Forwarder(forwardingSocket);
+                QueueThread forwarder = new QueueThread() {
+                    @Override
+                    public void onQueue() {
+                        byte[] bytes = (byte[]) this.getData();
+                        try {
+                            forwardingSocket.write(bytes, 0, bytes.length);
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                            this.kill(true);
+                        }
+                    }
+                };
                 forwarderThreads.add(forwarder);
                 forwarder.start();
             }
@@ -63,82 +78,20 @@ public class FileHelper {
                 int nBytes = inpSocket.read(buffer);
                 fileOutputStream.write(buffer, 0, nBytes);
                 totalBytesRead += nBytes;
-                for (Forwarder forwarderThread: forwarderThreads) {
+                for (QueueThread forwarderThread: forwarderThreads) {
 //                    forwardingSocket.write(buffer, 0, nBytes);
                     forwarderThread.pushData(Arrays.copyOf(buffer, nBytes));
                 }
             }
         } catch (FileNotFoundException e) {
+            e.printStackTrace();
             return -1;
         } finally {
-            for (Forwarder forwarderThread: forwarderThreads) {
-                forwarderThread.turnoff();
+            for (QueueThread forwarderThread: forwarderThreads) {
+                forwarderThread.kill();
             }
         }
 
         return 0;
-    }
-
-    static class Forwarder extends Thread {
-        /**
-         * outSocket:
-         * mQueue: data from file pushed in to mQueue and waiting to be sent
-         * stoppable: is `true` when parent thread has pushed the whole file into mQueue,
-         *            so Forwarder can stop after finishing sending
-         */
-        private Boolean stoppable = false;
-        private final Queue<byte[]> mQueue = new LinkedList<>();
-        private final DataOutputStream outSocket;
-
-        private final Object stoppableLock = new Object();
-
-        Forwarder(DataOutputStream outSocket) {
-            this.outSocket = outSocket;
-        }
-
-        private void turnoff() {
-            synchronized (this.stoppableLock) {
-                this.stoppable = true;
-            }
-        }
-
-        private Boolean canStop() {
-            synchronized (this.stoppableLock) {
-                return this.stoppable;
-            }
-        }
-
-        private boolean queueNotEmpty() {
-            synchronized (this.mQueue) {
-                return this.mQueue.size() > 0;
-            }
-        }
-
-        private void pushData(byte[] bytes) {
-            synchronized (this.mQueue) {
-                this.mQueue.add(bytes);
-            }
-        }
-
-        private byte[] getData() {
-            synchronized (this.mQueue) {
-                return this.mQueue.remove();
-            }
-        }
-
-        @Override
-        public void run() {
-            while (!this.canStop() || this.queueNotEmpty()) {
-                if (this.queueNotEmpty()) {
-                    byte[] bytes = this.getData();
-                    try {
-                        this.outSocket.write(bytes, 0, bytes.length);
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                        return;  // thread will stop instantly if connection failed
-                    }
-                }
-            }
-        }
     }
 }
