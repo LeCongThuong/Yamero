@@ -6,8 +6,16 @@ import java.util.*;
 public class FileHelper {
     private static int bufferSize = 1024;
 
+    private static int loadBufferSize() {
+        ConfigLoader configLoader = new ConfigLoader("helpers/config.properties");
+        String bufferSizeConf = configLoader.getProperty("buffer-size");
+        if (bufferSizeConf == null) return bufferSize;
+        return Integer.parseInt(bufferSizeConf);
+    }
+
     public static int sendFile(DataOutputStream outSocket, String filepath) throws IOException {
         System.out.println("FileHelper sending file: " + filepath);
+        System.out.println("Buffersize is: " + loadBufferSize());
         try {
             File file = new File(filepath);
             FileInputStream fileInputStream = new FileInputStream(file);
