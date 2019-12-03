@@ -14,8 +14,8 @@ public class FileHelper {
     }
 
     public static int sendFile(DataOutputStream outSocket, String filepath) throws IOException {
-        System.out.println("FileHelper sending file: " + filepath);
-        System.out.println("Buffersize is: " + loadBufferSize());
+        int bufferSize = loadBufferSize();
+        System.out.println("FileHelper sending file: " + filepath + " with bufferSize: " + bufferSize);
         try {
             File file = new File(filepath);
             FileInputStream fileInputStream = new FileInputStream(file);
@@ -38,7 +38,8 @@ public class FileHelper {
     }
 
     public static int receiveFile(DataInputStream inpSocket, String filepath, long fileSize) throws IOException {
-        System.out.println("FileHelper receiving file: " + filepath);
+        System.out.println("FileHelper receiving file: " + filepath + " with bufferSize: " + bufferSize);
+        int bufferSize = loadBufferSize();
         try {
             FileOutputStream fileOutputStream = new FileOutputStream(filepath);
             byte[] buffer = new byte[bufferSize];
@@ -56,7 +57,8 @@ public class FileHelper {
     }
 
     public static int forwardFile(DataInputStream inpSocket, ArrayList<DataOutputStream> forwardingSockets, String filepath, long fileSize) throws IOException {
-        System.out.println("FileHelper receiving and forwarding file: " + filepath);
+        System.out.println("FileHelper receiving and forwarding file: " + filepath + " with bufferSize: " + bufferSize);
+        int bufferSize = loadBufferSize();
         // create threads to forward file through forwardingSockets
         ArrayList<QueueThread> forwarderThreads = new ArrayList<>();
         FileOutputStream fileOutputStream;
