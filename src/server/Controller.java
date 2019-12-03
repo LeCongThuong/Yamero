@@ -37,8 +37,16 @@ public class Controller {
                 if (file.exists() && file.isFile()) {
                     long startTime = System.currentTimeMillis();
                     c1.sendFile(fileName);
-                    long finishTime = Math.max(c1.getFinishTime(), Math.max(c2.getFinishTime(), c3.getFinishTime()));
+                    long c1_time = c1.getFinishTime();
+                    long c2_time = c2.getFinishTime();
+                    long c3_time = c3.getFinishTime();
+                    long finishTime = Math.max(c1_time, Math.max(c2_time, c3_time));
+
                     uiManager.sendFileSuccess(finishTime - startTime);
+                    uiManager.sendFileSuccess(c1_time - startTime);
+                    uiManager.sendFileSuccess(c2_time - startTime);
+                    uiManager.sendFileSuccess(c3_time - startTime);
+
                 } else {
                     uiManager.fileNotFound(fileName);
                 }
