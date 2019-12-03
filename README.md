@@ -38,3 +38,10 @@ Hiện tại mới test chạy trên 1 máy, server mặc định chạy port 90
 	- c1 nhận file name, gửi cho c2, c3
 	- c1 nhận file size, gửi cho c2, c3
 	- c1 nhận file, gửi cho c2, c3
+	
+# Configuration
+Sử dụng giá trị default khi không tìm thấy file config theo đường dẫn hoặc trong file config không có giá trị tương ứng.
+- Client - ```out/production/Yamero/client/config.properties```:
+    - ```server-ip```: địa chỉ ip của server (default: ```127.0.0.1```)
+- Helper - ```out/production/Yamero/helpers/config.properties```:
+    - ```file-buffer-size```: buffer đọc ghi và gửi nhận file (default: ```1024```) 
