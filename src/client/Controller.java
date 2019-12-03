@@ -1,5 +1,6 @@
 package client;
 
+import helpers.ConfigLoader;
 import helpers.FileHelper;
 import helpers.MessageControlHelper;
 import helpers.MessageControlHelper.*;
@@ -16,8 +17,6 @@ public class Controller {
 
     // server info
     private static final int serverPort = 9090;
-//    private static final String serverIp = "127.0.0.1";
-    private static final String serverIp = "192.168.2.2";
 
     // input utils
     private static InputStream inputStream = null;
@@ -31,7 +30,7 @@ public class Controller {
     public static void main(String[] args) {
         try {
             //connect to server
-            Socket socket = connectionHandle(serverIp, serverPort);
+            Socket socket = connectionHandle(getServerIp(), serverPort);
             // Input init
             inputStream = socket.getInputStream();
             dataInputStream = new DataInputStream(inputStream);
@@ -58,6 +57,19 @@ public class Controller {
             }
         } catch (Exception e) {
             e.printStackTrace();
+        }
+    }
+
+    private static String getServerIp() {
+        final String localhost = "127.0.0.1";
+        try {
+            ConfigLoader configLoader = new ConfigLoader("client/config.properties");
+            if (configLoader.getProperty("server-ip") != null) {
+                return configLoader.getProperty("server-ip");
+            }
+            return localhost;
+        } catch (Exception e) {
+            return localhost;
         }
     }
 

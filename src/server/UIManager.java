@@ -29,4 +29,6 @@ public class UIManager {
     public void sendFileSuccess(long time) {
         System.out.println("Send file finish in " + time + " ms\n");
     }
+
+    public void displayMessageInline(String message) { System.out.print(message); }
 }

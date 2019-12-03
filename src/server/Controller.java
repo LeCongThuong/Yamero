@@ -42,11 +42,17 @@ public class Controller {
                     long c3_time = c3.getFinishTime();
                     long finishTime = Math.max(c1_time, Math.max(c2_time, c3_time));
 
-                    uiManager.sendFileSuccess(finishTime - startTime);
+                    uiManager.displayMessageInline("C1 Response time: ");
                     uiManager.sendFileSuccess(c1_time - startTime);
+
+                    uiManager.displayMessageInline("C2 Response time: ");
                     uiManager.sendFileSuccess(c2_time - startTime);
+
+                    uiManager.displayMessageInline("C3 Response time: ");
                     uiManager.sendFileSuccess(c3_time - startTime);
 
+                    uiManager.displayMessageInline("Overall response time: ");
+                    uiManager.sendFileSuccess(finishTime - startTime);
                 } else {
                     uiManager.fileNotFound(fileName);
                 }
