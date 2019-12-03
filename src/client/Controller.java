@@ -2,6 +2,7 @@ package client;
 
 import java.net.*;
 import java.io.*;
+import java.util.Properties;
 
 public class Controller {
     // client info
@@ -23,7 +24,8 @@ public class Controller {
 
     public static void main(String[] args) {
         try {
-            InetAddress serverAddress = InetAddress.getByName(serverIp);
+            InetAddress serverAddress = InetAddress.getByName(getServerIp());
+            System.out.println("SERVER IP: " + serverAddress);
             Socket socket = new Socket(serverAddress, serverPort);
 
             // Input init
@@ -113,6 +115,18 @@ public class Controller {
             }
         } catch (Exception e) {
             e.printStackTrace();
+        }
+    }
+
+    private static String getServerIp() {
+        try {
+            Properties properties = new Properties();
+            InputStream inputStream = new FileInputStream("client/config.properties");
+            properties.load(inputStream);
+            return properties.getProperty("server-ip");
+        } catch (IOException e) {
+            e.printStackTrace();
+            return "127.0.0.1";
         }
     }
 }
