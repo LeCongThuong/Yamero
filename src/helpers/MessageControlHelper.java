@@ -27,20 +27,20 @@ public class MessageControlHelper {
     }
 
     public static void sendFileInfo(DataOutputStream outSocket, FileInfo fileInfo) throws IOException {
-        try{
-           outSocket.writeUTF(fileInfo.fileName);
-           outSocket.writeLong(fileInfo.fileSize);
-        }catch(IOException e){
+        try {
+            outSocket.writeUTF(fileInfo.fileName);
+            outSocket.writeLong(fileInfo.fileSize);
+        } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
     public static FileInfo receiveFileInfo(DataInputStream inpSocket) throws IOException {
         try {
-            String fileName= inpSocket.readUTF();
+            String fileName = inpSocket.readUTF();
             long fileSize = inpSocket.readLong();
             return new FileInfo(fileName, fileSize);
-        }catch (IOException e) {
+        } catch (IOException e) {
             e.printStackTrace();
             return null;
         }

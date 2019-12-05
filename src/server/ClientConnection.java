@@ -9,10 +9,13 @@ import helpers.MessageControlHelper;
 public class ClientConnection {
     // client info
     private int id;
-    private Socket socket;
+    private ServerSocket servConnection;
+    private Socket controlSocket;
+    private Socket[] dataSockets;
     private int port;
     private String ip;
     private static final int bufferSize = 1024;
+    private static final int nThreads = 2;
 
     // input
     private InputStream inputStream = null;
@@ -22,18 +25,25 @@ public class ClientConnection {
     private OutputStream outputStream = null;
     private DataOutputStream dataOutputStream = null;
 
-    public ClientConnection(int clientId, Socket connection) {
-        id = clientId;
-        socket = connection;
-        ip = socket.getInetAddress().toString().replace("/", "");
-        port = socket.getPort();
+    public ClientConnection(int clientId, ServerSocket connection) {
+        this.id = clientId;
+        this.servConnection = connection;
+        try {
+            controlSocket = connection.accept();
+            dataSockets = new Socket[nThreads];
+        } catch (IOException e) {
+            System.out.println("Accept client connection error!");
+            e.printStackTrace();
+        }
+        ip = controlSocket.getInetAddress().toString().replace("/", "");
+        port = controlSocket.getPort();
         try {
             // Input init
-            inputStream = socket.getInputStream();
+            inputStream = controlSocket.getInputStream();
             dataInputStream = new DataInputStream(inputStream);
 
             // Output init
-            outputStream = socket.getOutputStream();
+            outputStream = controlSocket.getOutputStream();
             dataOutputStream = new DataOutputStream(outputStream);
 
             // Send clientId back to client
@@ -62,7 +72,22 @@ public class ClientConnection {
             File file = new File(fileName);
             long fileSize = file.length();
             MessageControlHelper.sendFileInfo(dataOutputStream, new MessageControlHelper.FileInfo(fileName, fileSize));
-            FileHelper.sendFile(dataOutputStream, fileName);
+            //TODO: create multithread for sending file
+            for (int threadIndex = 0; threadIndex< nThreads; threadIndex++) {
+                dataSockets[threadIndex] = this.servConnection.accept();
+                DataOutputStream parallelOutputStream = new DataOutputStream(dataSockets[threadIndex].getOutputStream());
+                // TODO: handel file partitioning
+                new Thread(() -> {
+                    try {
+                        FileHelper.sendFile(parallelOutputStream, fileName);
+                    } catch (IOException e) {
+                        System.out.println("Error in file sending threads");
+                        e.printStackTrace();
+                    }
+                });
+//                FileHelper.sendFile(parallelOutputStream, fileName);
+            }
+
         } catch (IOException e) {
             System.out.println("Something went wrong when send file");
         }
