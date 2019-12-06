@@ -95,6 +95,7 @@ public class Controller {
             System.out.println("Forwarder: " + fileInfo.fileName + " " + fileInfo.fileSize);
             MessageControlHelper.sendFileInfo(c2OutputStream, fileInfo);
             MessageControlHelper.sendFileInfo(c3OutputStream, fileInfo);
+
             // Receive and Forward file
             FileHelper.forwardFile(dataInputStream, new ArrayList<>(Arrays.asList(c2OutputStream, c3OutputStream)), "./c1/" + fileInfo.fileName, fileInfo.fileSize);
             long finishTime = System.currentTimeMillis();
@@ -104,12 +105,14 @@ public class Controller {
     }
 
     private static void executeAsNormalClient() throws IOException {
-
+        // connecct to c1
         Socket c1 = connectionHandle(clientAddress[0].getIp(), 9000);
         dataOutputStream.writeBoolean(true);
         System.out.println("Connected to C1 at " + clientAddress[0].getIp() + ":9000");
         DataInputStream c1InputStream = new DataInputStream(c1.getInputStream());
+
         while (true) {
+            // receive file when forwarded
             FileInfo fileInfo = MessageControlHelper.receiveFileInfo(c1InputStream);
             System.out.println("Receiver" + fileInfo.fileName + fileInfo.fileSize);
             String filepath = "./c" + id + "/" + fileInfo.fileName;

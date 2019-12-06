@@ -43,7 +43,6 @@ public class ClientConnection {
         }
     }
 
-    // TODO: handle error
     public void sendMessage(String message) {
         try {
             dataOutputStream.writeUTF(message);
@@ -52,12 +51,12 @@ public class ClientConnection {
         }
     }
 
-    // TODO: handle error
     public boolean isSuccess() throws IOException {
         return dataInputStream.readBoolean();
     }
 
-    public void sendFile(String fileName) {
+    public void sendFile(String fileName) throws SocketException {
+        socket.setTcpNoDelay(true);
         try {
             File file = new File(fileName);
             long fileSize = file.length();
@@ -68,7 +67,6 @@ public class ClientConnection {
         }
     }
 
-    // TODO: handle error
     public long getFinishTime() throws IOException {
         return dataInputStream.readLong();
     }
