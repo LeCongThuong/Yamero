@@ -1,5 +1,7 @@
 package helpers;
 
+import server.UIManager;
+
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
@@ -30,6 +32,7 @@ public class MessageControlHelper {
         try {
             outSocket.writeUTF(fileInfo.fileName);
             outSocket.writeLong(fileInfo.fileSize);
+            System.out.println("DEBUG: send " + fileInfo.fileName + " " + fileInfo.fileSize);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -39,6 +42,7 @@ public class MessageControlHelper {
         try {
             String fileName = inpSocket.readUTF();
             long fileSize = inpSocket.readLong();
+            System.out.println("DEBUG: receive " + fileName + " " + fileSize);
             return new FileInfo(fileName, fileSize);
         } catch (IOException e) {
             e.printStackTrace();
