@@ -56,7 +56,6 @@ public class ClientConnection {
     }
 
     public void sendFile(String fileName) throws SocketException {
-        socket.setTcpNoDelay(true);
         try {
             File file = new File(fileName);
             long fileSize = file.length();
