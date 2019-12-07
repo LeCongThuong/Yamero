@@ -12,7 +12,8 @@ import java.net.ConnectException;
 
 public class Controller {
     // client info
-    private static String forwarderIp = null;
+    private static int id;
+    private static ClientAddress[] clientAddress = new ClientAddress[3];
 
     // server info
     private static final int serverPort = 9090;
@@ -25,19 +26,6 @@ public class Controller {
     private static OutputStream outputStream = null;
     private static DataOutputStream dataOutputStream = null;
 
-    public static boolean isThisMyIpAddress(String ip) throws UnknownHostException {
-        InetAddress addr = InetAddress.getByName(ip);
-        // Check if the address is a valid special local or loop back
-        if (addr.isAnyLocalAddress() || addr.isLoopbackAddress())
-            return true;
-
-        // Check if the address is defined on any interface
-        try {
-            return NetworkInterface.getByInetAddress(addr) != null;
-        } catch (SocketException e) {
-            return false;
-        }
-    }
 
     public static void main(String[] args) {
         try {
@@ -52,16 +40,23 @@ public class Controller {
             dataOutputStream = new DataOutputStream(outputStream);
 
             // identify client
-            forwarderIp = MessageControlHelper.receiveForwarderNotify(dataInputStream);
-            System.out.println("Connected to server.");
+            id = dataInputStream.readByte();
+            System.out.println("C" + id + " connected to server.");
 
-            if (isThisMyIpAddress(forwarderIp)) {
+            // get other client info
+            String message = dataInputStream.readUTF();
+            String[] address = message.split(" ", 3);
+            for (int i = 0; i < 3; i++) {
+                clientAddress[i] = new ClientAddress(address[i]);
+            }
+
+            if (id == 1) {
                 executeAsForwarderClient();
             } else {
                 executeAsNormalClient();
             }
         } catch (Exception e) {
-            System.out.println("Connection error, please make sure your config is correct then try again.\n");
+            e.printStackTrace();
         }
     }
 
@@ -81,22 +76,18 @@ public class Controller {
     private static void executeAsForwarderClient() throws IOException {
         // c1 wait for c2 and c3 connect
         ServerSocket serverSocket = new ServerSocket(9000);
+        dataOutputStream.writeBoolean(true);
         System.out.println("Listening at port 9000");
 
         // connect c2
         Socket c2 = serverSocket.accept();
-        ClientAddress c2Address = new ClientAddress(c2);
-        System.out.println("C2(" + c2Address.getIp() + ":" + c2Address.getPort() + ") connected");
+        System.out.println("C2(" + clientAddress[1].getIp() + ":" + clientAddress[1].getPort() + ") connected");
         DataOutputStream c2OutputStream = new DataOutputStream(c2.getOutputStream());
 
         // connect c3
         Socket c3 = serverSocket.accept();
-        ClientAddress c3Address = new ClientAddress(c3);
-        System.out.println("C3(" + c3Address.getIp() + ":" + c3Address.getPort() + ") connected");
+        System.out.println("C3(" + clientAddress[2].getIp() + ":" + clientAddress[2].getPort() + ") connected");
         DataOutputStream c3OutputStream = new DataOutputStream(c3.getOutputStream());
-
-        // notify Server ready to send file
-        dataOutputStream.writeBoolean(true);
 
         while (true) {
             // forward file info
@@ -106,14 +97,7 @@ public class Controller {
             MessageControlHelper.sendFileInfo(c3OutputStream, fileInfo);
 
             // Receive and Forward file
-            String filePath = "./" + fileInfo.fileName;
-            try {
-                FileHelper.forwardFile(dataInputStream, new ArrayList<>(Arrays.asList(c2OutputStream, c3OutputStream)), filePath, fileInfo.fileSize);
-            } catch (FileNotFoundException e) {
-                System.out.println("Something went wrong, please make sure this file path available: " + filePath);
-                dataOutputStream.writeLong(-1);
-                continue;
-            }
+            FileHelper.forwardFile(dataInputStream, new ArrayList<>(Arrays.asList(c2OutputStream, c3OutputStream)), "./c1/" + fileInfo.fileName, fileInfo.fileSize);
             long finishTime = System.currentTimeMillis();
             dataOutputStream.writeLong(finishTime);
             System.out.println("Receive file " + fileInfo.fileName + " successfully.");
@@ -121,24 +105,18 @@ public class Controller {
     }
 
     private static void executeAsNormalClient() throws IOException {
-        // connect to c1
-        Socket c1 = connectionHandle(forwarderIp, 9000);
-        ClientAddress c1Address = new ClientAddress(c1);
-        System.out.println("Connected to C1 at " + c1Address.getIp() + ":9000");
+        // connecct to c1
+        Socket c1 = connectionHandle(clientAddress[0].getIp(), 9000);
+        dataOutputStream.writeBoolean(true);
+        System.out.println("Connected to C1 at " + clientAddress[0].getIp() + ":9000");
         DataInputStream c1InputStream = new DataInputStream(c1.getInputStream());
 
         while (true) {
             // receive file when forwarded
             FileInfo fileInfo = MessageControlHelper.receiveFileInfo(c1InputStream);
-            System.out.println("Receiver " + fileInfo.fileName + fileInfo.fileSize);
-            String filePath = "./" + fileInfo.fileName;
-            try {
-                FileHelper.receiveFile(c1InputStream, filePath, fileInfo.fileSize);
-            } catch (FileNotFoundException e) {
-                System.out.println("Something went wrong, please make sure this file path available: " + filePath);
-                dataOutputStream.writeLong(-1);
-                continue;
-            }
+            System.out.println("Receiver" + fileInfo.fileName + fileInfo.fileSize);
+            String filepath = "./c" + id + "/" + fileInfo.fileName;
+            FileHelper.receiveFile(c1InputStream, filepath, fileInfo.fileSize);
             long finishTime = System.currentTimeMillis();
             dataOutputStream.writeLong(finishTime);
             System.out.println("Receive file " + fileInfo.fileName + " successfully.");
@@ -146,6 +124,7 @@ public class Controller {
     }
 
     private static Socket connectionHandle(String targetIp, int port) throws IOException {
+        InetAddress serverAddress = InetAddress.getByName(targetIp);
         boolean isSuccessConnection = false;
         while(!isSuccessConnection){
             try{

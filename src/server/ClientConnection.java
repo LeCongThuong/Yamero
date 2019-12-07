@@ -13,7 +13,6 @@ public class ClientConnection {
     private int port;
     private String ip;
     private static final int bufferSize = 1024;
-    private static String forwarderIp = null;
 
     // input
     private InputStream inputStream = null;
@@ -28,12 +27,6 @@ public class ClientConnection {
         socket = connection;
         ip = socket.getInetAddress().toString().replace("/", "");
         port = socket.getPort();
-
-        // first client connected to server will be forwarder
-        if (forwarderIp == null) {
-            forwarderIp = ip;
-        }
-
         try {
             // Input init
             inputStream = socket.getInputStream();
@@ -43,7 +36,8 @@ public class ClientConnection {
             outputStream = socket.getOutputStream();
             dataOutputStream = new DataOutputStream(outputStream);
 
-            MessageControlHelper.sendForwarderNotify(dataOutputStream, forwarderIp);
+            // Send clientId back to client
+            dataOutputStream.write(id);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -62,6 +56,7 @@ public class ClientConnection {
     }
 
     public void sendFile(String fileName) throws SocketException {
+        socket.setTcpNoDelay(true);
         try {
             File file = new File(fileName);
             long fileSize = file.length();

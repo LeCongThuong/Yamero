@@ -27,14 +27,23 @@ public class MessageControlHelper {
     }
 
     public static void sendFileInfo(DataOutputStream outSocket, FileInfo fileInfo) throws IOException {
-       outSocket.writeUTF(fileInfo.fileName);
-       outSocket.writeLong(fileInfo.fileSize);
+        try{
+           outSocket.writeUTF(fileInfo.fileName);
+           outSocket.writeLong(fileInfo.fileSize);
+        }catch(IOException e){
+            e.printStackTrace();
+        }
     }
 
     public static FileInfo receiveFileInfo(DataInputStream inpSocket) throws IOException {
-        String fileName= inpSocket.readUTF();
-        long fileSize = inpSocket.readLong();
-        return new FileInfo(fileName, fileSize);
+        try {
+            String fileName= inpSocket.readUTF();
+            long fileSize = inpSocket.readLong();
+            return new FileInfo(fileName, fileSize);
+        }catch (IOException e) {
+            e.printStackTrace();
+            return null;
+        }
     }
 
     public static void sendForwarderNotify(DataOutputStream outSocket, String forwarderIp) throws IOException {
@@ -50,7 +59,7 @@ public class MessageControlHelper {
         byte[] addressInBytes = new byte[64];
         int nBytes = inpSocket.read(addressInBytes);
         addressInBytes = Arrays.copyOf(addressInBytes, nBytes);
-        String forwarderIp = InetAddress.getByAddress(addressInBytes).toString().replace("/", "");
+        String forwarderIp = InetAddress.getByAddress(addressInBytes).toString();
         return forwarderIp;
     }
 }
