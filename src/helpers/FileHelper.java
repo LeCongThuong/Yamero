@@ -27,6 +27,7 @@ public class FileHelper {
             int nBytes;
             while ((nBytes = fileInputStream.read(buffer)) != -1) {
                 outSocket.write(buffer, 0, nBytes);
+//                System.out.println("sending byte");
             }
             outSocket.flush();
             fileInputStream.close();
@@ -65,7 +66,7 @@ public class FileHelper {
 
         try {
             fileOutputStream = new FileOutputStream(filepath);
-            for (DataOutputStream forwardingSocket: forwardingSockets) {
+            for (DataOutputStream forwardingSocket : forwardingSockets) {
                 QueueThread forwarder = new QueueThread() {
                     @Override
                     public void onQueue() {
@@ -85,10 +86,11 @@ public class FileHelper {
             long totalBytesRead = 0;
 
             while (totalBytesRead < fileSize) {
+//                System.out.println("DEBUG: total bytes read: " + totalBytesRead);
                 int nBytes = inpSocket.read(buffer);
                 fileOutputStream.write(buffer, 0, nBytes);
                 totalBytesRead += nBytes;
-                for (QueueThread forwarderThread: forwarderThreads) {
+                for (QueueThread forwarderThread : forwarderThreads) {
 //                    forwardingSocket.write(buffer, 0, nBytes);
                     forwarderThread.pushData(Arrays.copyOf(buffer, nBytes));
                 }
@@ -97,7 +99,7 @@ public class FileHelper {
             e.printStackTrace();
             return -1;
         } finally {
-            for (QueueThread forwarderThread: forwarderThreads) {
+            for (QueueThread forwarderThread : forwarderThreads) {
                 forwarderThread.kill();
             }
         }

@@ -69,22 +69,22 @@ public class ClientConnection {
 
     public void sendFile(String fileName) {
         try {
-            File file = new File(fileName);
+            // TODO: remove when done testing
+            File file = new File("server/" + fileName);
             long fileSize = file.length();
             MessageControlHelper.sendFileInfo(dataOutputStream, new MessageControlHelper.FileInfo(fileName, fileSize));
-            //TODO: create multithread for sending file
-            for (int threadIndex = 0; threadIndex< nThreads; threadIndex++) {
+            for (int threadIndex = 0; threadIndex < nThreads; threadIndex++) {
                 dataSockets[threadIndex] = this.servConnection.accept();
                 DataOutputStream parallelOutputStream = new DataOutputStream(dataSockets[threadIndex].getOutputStream());
-                // TODO: handel file partitioning
+                // TODO: handle file partitioning
                 new Thread(() -> {
                     try {
-                        FileHelper.sendFile(parallelOutputStream, fileName);
+                        FileHelper.sendFile(parallelOutputStream, "server/" + fileName);
                     } catch (IOException e) {
                         System.out.println("Error in file sending threads");
                         e.printStackTrace();
                     }
-                });
+                }).start();
 //                FileHelper.sendFile(parallelOutputStream, fileName);
             }
 

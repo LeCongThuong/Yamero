@@ -24,20 +24,23 @@ public class Controller {
             // send all client address to every client
             String message = c1.getIp() + ":" + c1.getPort() + " " + c2.getIp() + ":" + c2.getPort() + " " + c3.getIp() + ":" + c3.getPort();
             c1.sendMessage(message);
-//            c1.isSuccess();
+            c1.isSuccess();
             c2.sendMessage(message);
-//            c2.isSuccess();
+            c2.isSuccess();
             c3.sendMessage(message);
-//            c3.isSuccess();
-            if (c1.isSuccess() && c2.isSuccess() && c3.isSuccess()) {
-//                System.out.println("one of client not connecting to ");
-                System.out.println("sending clients' info successfully");
-            }
+            c3.isSuccess();
+            System.out.println("sending clients' info successfully");
+//            if (c1.isSuccess() && c2.isSuccess() && c3.isSuccess()) {
+////                System.out.println("one of client not connecting to ");
+//                System.out.println("sending clients' info successfully");
+//            }
 
             // ready to send file
             while (true) {
                 String fileName = uiManager.getFileName();
-                File file = new File(fileName);
+                // TODO: remove when done testing
+
+                File file = new File("server/" + fileName);
                 if (file.exists() && file.isFile()) {
                     long startTime = System.currentTimeMillis();
                     c1.sendFile(fileName);
