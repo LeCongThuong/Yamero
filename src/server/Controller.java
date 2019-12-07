@@ -3,6 +3,7 @@ package server;
 import java.net.*;
 import java.io.*;
 
+
 public class Controller {
     private static int port = 9090;
     private static int bufferSize = 1024;
@@ -21,14 +22,8 @@ public class Controller {
             ClientConnection c3 = new ClientConnection(3, serverSocket.accept());
             uiManager.clientConnected(c3);
 
-            // send all client address to every client
-            String message = c1.getIp() + ":" + c1.getPort() + " " + c2.getIp() + ":" + c2.getPort() + " " + c3.getIp() + ":" + c3.getPort();
-            c1.sendMessage(message);
+            // is c1 c2 c3 all ready
             c1.isSuccess();
-            c2.sendMessage(message);
-            c2.isSuccess();
-            c3.sendMessage(message);
-            c3.isSuccess();
 
             // ready to send file
             while (true) {
@@ -40,6 +35,10 @@ public class Controller {
                     long c1_time = c1.getFinishTime();
                     long c2_time = c2.getFinishTime();
                     long c3_time = c3.getFinishTime();
+                    if (c1_time == -1 || c2_time == -1 || c3_time == -1) {
+                        uiManager.displayMessageInline("Something went wrong at client. Restart and try again\n");
+                        return;
+                    }
                     long finishTime = Math.max(c1_time, Math.max(c2_time, c3_time));
 
                     uiManager.displayMessageInline("C1 Response time: ");

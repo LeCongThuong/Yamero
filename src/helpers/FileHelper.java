@@ -31,32 +31,26 @@ public class FileHelper {
             outSocket.flush();
             fileInputStream.close();
         } catch (FileNotFoundException e) {
-            e.printStackTrace();
+            System.out.println("Something went wrong, please make sure this file path exist: " + filepath);
             return -1;
         }
         return 0;
     }
 
-    public static int receiveFile(DataInputStream inpSocket, String filepath, long fileSize) throws IOException {
+    public static void receiveFile(DataInputStream inpSocket, String filepath, long fileSize) throws IOException {
         int bufferSize = loadBufferSize();
         System.out.println("FileHelper receiving file: " + filepath + " with bufferSize: " + bufferSize);
-        try {
-            FileOutputStream fileOutputStream = new FileOutputStream(filepath);
-            byte[] buffer = new byte[bufferSize];
-            long totalBytesRead = 0;
-            while (totalBytesRead < fileSize) {
-                int nBytes = inpSocket.read(buffer);
-                fileOutputStream.write(buffer, 0, nBytes);
-                totalBytesRead += nBytes;
-            }
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-            return -1;
+        FileOutputStream fileOutputStream = new FileOutputStream(filepath);
+        byte[] buffer = new byte[bufferSize];
+        long totalBytesRead = 0;
+        while (totalBytesRead < fileSize) {
+            int nBytes = inpSocket.read(buffer);
+            fileOutputStream.write(buffer, 0, nBytes);
+            totalBytesRead += nBytes;
         }
-        return 0;
     }
 
-    public static int forwardFile(DataInputStream inpSocket, ArrayList<DataOutputStream> forwardingSockets, String filepath, long fileSize) throws IOException {
+    public static void forwardFile(DataInputStream inpSocket, ArrayList<DataOutputStream> forwardingSockets, String filepath, long fileSize) throws IOException {
         int bufferSize = loadBufferSize();
         System.out.println("FileHelper receiving and forwarding file: " + filepath + " with bufferSize: " + bufferSize);
         // create threads to forward file through forwardingSockets
@@ -94,14 +88,11 @@ public class FileHelper {
                 }
             }
         } catch (FileNotFoundException e) {
-            e.printStackTrace();
-            return -1;
+            throw e;
         } finally {
             for (QueueThread forwarderThread: forwarderThreads) {
                 forwarderThread.kill();
             }
         }
-
-        return 0;
     }
 }
