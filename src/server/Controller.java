@@ -21,14 +21,8 @@ public class Controller {
             ClientConnection c3 = new ClientConnection(3, serverSocket.accept());
             uiManager.clientConnected(c3);
 
-            // send all client address to every client
-            String message = c1.getIp() + ":" + c1.getPort() + " " + c2.getIp() + ":" + c2.getPort() + " " + c3.getIp() + ":" + c3.getPort();
-            c1.sendMessage(message);
+            // check if all client is ready to receive file
             c1.isSuccess();
-            c2.sendMessage(message);
-            c2.isSuccess();
-            c3.sendMessage(message);
-            c3.isSuccess();
 
             // ready to send file
             while (true) {
@@ -59,6 +53,7 @@ public class Controller {
             }
         } catch (Exception e) {
             e.printStackTrace();
+            uiManager.displayMessageInline("\nSomething went wrong. Restart project and try again");
         }
     }
 }
