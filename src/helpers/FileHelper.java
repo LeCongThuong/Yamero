@@ -89,7 +89,6 @@ public class FileHelper {
                 fileOutputStream.write(buffer, 0, nBytes);
                 totalBytesRead += nBytes;
                 for (QueueThread forwarderThread: forwarderThreads) {
-//                    forwardingSocket.write(buffer, 0, nBytes);
                     forwarderThread.pushData(Arrays.copyOf(buffer, nBytes));
                 }
             }

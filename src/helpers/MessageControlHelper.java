@@ -12,10 +12,6 @@ public class MessageControlHelper {
     public static final String FILE_INFO = "FILE_INFO";
     public static final String FORWARDER_NOTIFY = "FORWARDER_NOTIFY";
 
-    private static ArrayList<String> parseMessage(byte[] bytes) {
-        return new ArrayList<>();
-    }
-
     public static class FileInfo {
         public final String fileName;
         public final long fileSize;
@@ -59,7 +55,7 @@ public class MessageControlHelper {
         byte[] addressInBytes = new byte[64];
         int nBytes = inpSocket.read(addressInBytes);
         addressInBytes = Arrays.copyOf(addressInBytes, nBytes);
-        String forwarderIp = InetAddress.getByAddress(addressInBytes).toString();
+        String forwarderIp = InetAddress.getByAddress(addressInBytes).toString().replace("/", "");
         return forwarderIp;
     }
 }
