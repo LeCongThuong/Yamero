@@ -37,23 +37,27 @@ Có thể ấn Ctrl + C ở server để ngắt chương trình.
 
 ## Test result
 
-1MB.pdf : 174149 ms 
-3MB.mp4 : 517284 ms
+| File     | Time (s) |
+|----------|----------|
+| 6KB.zip  | 2        |
+| 1MB.pdf  | 174      |
+| 3MB.mp4  | 517      |
+| 10MB.mp4 | 1632     |
 
 ## Cấu trúc chương trình
 
-* [client/](.\src\client)
-  * [ClientAddress.java](.\src\client\ClientAddress.java)
-  * [Controller.java](.\src\client\Controller.java)
-* [helpers/](.\src\helpers)
-  * [ConfigLoader.java](.\src\helpers\ConfigLoader.java)
-  * [FileHelper.java](.\src\helpers\FileHelper.java)
-  * [MessageControlHelper.java](.\src\helpers\MessageControlHelper.java)
-  * [QueueThread.java](.\src\helpers\QueueThread.java)
-* [server/](.\src\server)
-  * [ClientConnection.java](.\src\server\ClientConnection.java)
-  * [Controller.java](.\src\server\Controller.java)
-  * [UIManager.java](.\src\server\UIManager.java)
+* [client/](./src/client)
+  * [ClientAddress.java](./src/client/ClientAddress.java)
+  * [Controller.java](./src/client/Controller.java)
+* [helpers/](./src/helpers)
+  * [ConfigLoader.java](./src/helpers/ConfigLoader.java)
+  * [FileHelper.java](./src/helpers/FileHelper.java)
+  * [MessageControlHelper.java](./src/helpers/MessageControlHelper.java)
+  * [QueueThread.java](./src/helpers/QueueThread.java)
+* [server/](./src/server)
+  * [ClientConnection.java](./src/server/ClientConnection.java)
+  * [Controller.java](./src/server/Controller.java)
+  * [UIManager.java](./src/server/UIManager.java)
 
 Có 3 package server, client, helpers trong đó
 - client:
