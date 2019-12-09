@@ -4,7 +4,7 @@ import java.net.Socket;
 public class SimpleClient {
 
 	public static void main(String[] args) throws Exception {
-		Socket socket = new Socket("127.0.0.1", 6666);
+		Socket socket = new Socket("192.168.2.2", 6666);
 		InputStream input = socket.getInputStream();
 		long total = 0;
 		long start = System.currentTimeMillis();
