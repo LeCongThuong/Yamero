@@ -48,8 +48,9 @@ public class server {
                 if (flag) {
                     long endSending = System.currentTimeMillis();
                     long executeTime = endSending - startSending;
-                    System.out.println("Sending " + testSize + "kB in " + executeTime + " ms.");
-                    System.out.println("Estimated bandwith: " + (float) (testSize / (executeTime / 1000.0)) + "kB/s");
+                    int testSizeInKB = testSize / 1024;
+                    System.out.println("Sending " + testSizeInKB + "kB in " + executeTime + " ms.");
+                    System.out.println("Estimated bandwith: " + (float) (testSizeInKB / (executeTime / 1000.0)) + "kB/s");
                 }
             }
         } catch (IOException e) {
