@@ -30,11 +30,11 @@ public class ClientConnection {
         try {
             // Input init
             inputStream = socket.getInputStream();
-            dataInputStream = new DataInputStream(inputStream);
+            dataInputStream = new DataInputStream(new BufferedInputStream(inputStream));
 
             // Output init
             outputStream = socket.getOutputStream();
-            dataOutputStream = new DataOutputStream(outputStream);
+            dataOutputStream = new DataOutputStream(new BufferedOutputStream(outputStream));
 
             // the first client connect to server will be forwarder
             if (forwarderIp == null) {
