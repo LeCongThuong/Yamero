@@ -16,12 +16,13 @@ public class client {
                 ? configLoader.getProperty("server-ip")
                 : "192.168.0.1";
         int port = Integer.parseInt(configLoader.getProperty("port"));
+        int bufferSize = Integer.parseInt(configLoader.getProperty("buffer-size"));
         try {
             Socket connSocket = new Socket(serverIP, port);
             DataInputStream dataInputStream = new DataInputStream(connSocket.getInputStream());
             DataOutputStream dataOutputStream = new DataOutputStream(connSocket.getOutputStream());
 
-            byte[] bytes = new byte[1024];
+            byte[] bytes = new byte[bufferSize];
 
             while (true) {
                 int testSize = dataInputStream.readInt();
