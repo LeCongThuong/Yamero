@@ -16,6 +16,7 @@ public class ClientConnection {
     private String ip;
     private static final int bufferSize = 1024;
     private static final int nThreads = 2;
+    private static String forwarderIp = null;
 
     // input
     private InputStream inputStream = null;
@@ -46,14 +47,17 @@ public class ClientConnection {
             outputStream = controlSocket.getOutputStream();
             dataOutputStream = new DataOutputStream(outputStream);
 
-            // Send clientId back to client
-            dataOutputStream.write(id);
+            // the first client connect to server will be forwarder
+            if (forwarderIp == null) {
+                forwarderIp = ip;
+            }
+            // Send forwarderIp back to client
+            MessageControlHelper.sendForwarderNotify(dataOutputStream, forwarderIp);
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
-    // TODO: handle error
     public void sendMessage(String message) {
         try {
             dataOutputStream.writeUTF(message);
@@ -62,12 +66,11 @@ public class ClientConnection {
         }
     }
 
-    // TODO: handle error
     public boolean isSuccess() throws IOException {
         return dataInputStream.readBoolean();
     }
 
-    public void sendFile(String fileName) {
+    public void sendFile(String fileName) throws SocketException {
         try {
             // TODO: remove when done testing
             File file = new File("server/" + fileName);
@@ -93,7 +96,6 @@ public class ClientConnection {
         }
     }
 
-    // TODO: handle error
     public long getFinishTime() throws IOException {
         return dataInputStream.readLong();
     }
