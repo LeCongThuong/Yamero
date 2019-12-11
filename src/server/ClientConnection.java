@@ -15,7 +15,7 @@ public class ClientConnection {
     private int port;
     private String ip;
     private static final int bufferSize = 1024;
-    private static final int nThreads = 2; //TODO: add to config file
+    private static final int nChunks = 2; //TODO: add to config file
     private static String forwarderIp = null;
 
     // input
@@ -31,11 +31,13 @@ public class ClientConnection {
         this.servConnection = connection;
         try {
             controlSocket = connection.accept();
-            dataSockets = new Socket[nThreads];
+            dataSockets = new Socket[nChunks];
         } catch (IOException e) {
             System.out.println("Accept client connection error!");
             e.printStackTrace();
         }
+
+        assert controlSocket != null;
         ip = controlSocket.getInetAddress().toString().replace("/", "");
         port = controlSocket.getPort();
         try {
@@ -66,26 +68,26 @@ public class ClientConnection {
         }
     }
 
-    public boolean isSuccess() throws IOException {
-        return dataInputStream.readBoolean();
+    void isSuccess() throws IOException {
+        dataInputStream.readBoolean();
     }
 
-    public void sendFile(String fileName) throws SocketException {
+    void sendFile(String fileName) throws SocketException {
         try {
             // TODO: modify path when done testing
             String filePath = "server/" + fileName;
             File file = new File(filePath);
             long fileSize = file.length();
 
-            // TODO: add # of parts(threads) to FileInfo
-            MessageControlHelper.sendFileInfo(dataOutputStream, new MessageControlHelper.FileInfo(fileName, fileSize));
+            // TODO: add # of parts(threads) to config file
+            MessageControlHelper.sendFileInfo(dataOutputStream, new MessageControlHelper.FileInfo(fileName, fileSize, nChunks));
 
-            // TODO: splitFile() => paths  (make temp dir)
-            String[] chunkPaths = FileHelper.splitFile(filePath, nThreads);
-            System.out.println("DEBUG: split file done");
+            // splitFile => paths  (make temp dir)
+            String[] chunkPaths = FileHelper.splitFile(filePath, nChunks);
+            System.out.println("DEBUG: split file to chunks done");
 
-            Thread[] dataThreads = new Thread[nThreads];
-            for (int threadIndex = 0; threadIndex < nThreads; threadIndex++) {
+            Thread[] dataThreads = new Thread[nChunks];
+            for (int threadIndex = 0; threadIndex < nChunks; threadIndex++) {
                 dataSockets[threadIndex] = this.servConnection.accept();
                 DataOutputStream parallelOutputStream = new DataOutputStream(dataSockets[threadIndex].getOutputStream());
                 int finalThreadIndex = threadIndex;
@@ -98,13 +100,12 @@ public class ClientConnection {
                     }
                 });
                 dataThreads[threadIndex].start();
-                // TODO: merge parts of files (path, nthreads)
-
             }
 
-            for (Thread thread: dataThreads)
+            for (Thread thread : dataThreads)
                 thread.join();
 
+            System.out.println("Remove temp chunk");
             FileHelper.removeTempChunks(chunkPaths);
 
         } catch (IOException | InterruptedException e) {

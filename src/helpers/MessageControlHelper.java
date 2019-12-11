@@ -1,13 +1,10 @@
 package helpers;
 
-import server.UIManager;
-
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
-import java.util.ArrayList;
 import java.util.Arrays;
 
 public class MessageControlHelper {
@@ -17,10 +14,12 @@ public class MessageControlHelper {
     public static class FileInfo {
         public final String fileName;
         public final long fileSize;
+        public final int nChunks;
 
-        public FileInfo(String fileName, long fileSize) {
+        public FileInfo(String fileName, long fileSize, int nChunks) {
             this.fileName = fileName;
             this.fileSize = fileSize;
+            this.nChunks = nChunks;
         }
     }
 
@@ -28,6 +27,7 @@ public class MessageControlHelper {
         try {
             outSocket.writeUTF(fileInfo.fileName);
             outSocket.writeLong(fileInfo.fileSize);
+            outSocket.writeInt(fileInfo.nChunks);
             System.out.println("DEBUG: send " + fileInfo.fileName + " " + fileInfo.fileSize);
         } catch (IOException e) {
             e.printStackTrace();
@@ -38,8 +38,9 @@ public class MessageControlHelper {
         try {
             String fileName = inpSocket.readUTF();
             long fileSize = inpSocket.readLong();
+            int nChunks = inpSocket.readInt();
             System.out.println("DEBUG: receive " + fileName + " " + fileSize);
-            return new FileInfo(fileName, fileSize);
+            return new FileInfo(fileName, fileSize, nChunks);
         } catch (IOException e) {
             e.printStackTrace();
             return null;

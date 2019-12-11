@@ -18,7 +18,7 @@ public class Controller {
 
     // server info
     private static final int serverPort = 9090;
-    private static final int nThreads = 2; //TODO: move to config, rename
+    private static int nThreads = 2; //TODO: move to config, rename
 
     // input utils
     private static InputStream inputStream = null;
@@ -106,6 +106,8 @@ public class Controller {
             System.out.println("DEBUG: receive file info");
             if (fileInfo != null) {
                 System.out.println("Forwarder: " + fileInfo.fileName + " " + fileInfo.fileSize);
+                nThreads = fileInfo.nChunks;
+                System.out.println("DEBUG: number of threads: " + nThreads);
             } else {
                 System.out.println("Error receiving file info");
                 return;
@@ -122,6 +124,8 @@ public class Controller {
             DataOutputStream[] c3DataOutputStreams = new DataOutputStream[nThreads];
             DataOutputStream[] c2DataOutputStreams = new DataOutputStream[nThreads];
 
+            int normalChunkSize = (int) (fileInfo.fileSize / nThreads);
+            int lastChunkSize = normalChunkSize + (int) fileInfo.fileSize % nThreads;
             String filePathBase = "client/" + fileInfo.fileName;
             Thread[] forwardDataThreads = new Thread[nThreads];
             for (int threadIndex = 0; threadIndex < nThreads; threadIndex++) {
@@ -134,10 +138,9 @@ public class Controller {
                 c3DataSockets[threadIndex] = forwarderControlSocket.accept();
                 System.out.println("Client 3 thread " + threadIndex + " connected - port: " + c3DataSockets[threadIndex].getPort());
                 c3DataOutputStreams[threadIndex] = new DataOutputStream(c3DataSockets[threadIndex].getOutputStream());
-//                System.out.println("DEBUG: prepare to forward");
                 c2DataOutputStreams[threadIndex] = new DataOutputStream(c2DataSockets[threadIndex].getOutputStream());
 
-                System.out.println("DEBUG: thread " + threadIndex + " prepare to forward");
+                int chunkSize = (threadIndex == nThreads - 1 && lastChunkSize != 0) ? lastChunkSize : normalChunkSize;
 
                 int finalThreadIndex = threadIndex;
                 forwardDataThreads[threadIndex] = new Thread(() -> {
@@ -147,7 +150,7 @@ public class Controller {
                         FileHelper.forwardFile(forwarderDataInputStreams[finalThreadIndex],
                                 new ArrayList<>(Arrays.asList(c2DataOutputStreams[finalThreadIndex], c3DataOutputStreams[finalThreadIndex])),
                                 filePathBase + finalThreadIndex,
-                                fileInfo.fileSize / nThreads);
+                                chunkSize);
                         System.out.println("Receive file " + fileInfo.fileName + " successfully.");
                     } catch (IOException e) {
                         System.out.println("Error in file sending threads");
@@ -192,11 +195,11 @@ public class Controller {
             FileInfo fileInfo = MessageControlHelper.receiveFileInfo(c1ControlInputStream);
             if (fileInfo != null) {
                 System.out.println("Receiver " + fileInfo.fileName + " " + fileInfo.fileSize);
+                nThreads = fileInfo.nChunks;
             } else {
                 System.out.println("Error getting file info");
                 return;
             }
-            String filepath = fileInfo.fileName;
 
             Socket[] normalDataSockets = new Socket[nThreads];
             DataInputStream[] normalDataInputStreams = new DataInputStream[nThreads];
@@ -208,15 +211,21 @@ public class Controller {
                 Thread.sleep(15);
             }
 
+            int normalChunkSize = (int) (fileInfo.fileSize / nThreads);
+            int lastChunkSize = normalChunkSize + (int) fileInfo.fileSize % nThreads;
+
             String filePathBase = "client/" + fileInfo.fileName;
             Thread[] normalClientDataThreads = new Thread[nThreads];
             for (int threadIndex = 0; threadIndex < nThreads; threadIndex++) {
                 int finalThreadIndex = threadIndex;
+                int chunkSize = (threadIndex == nThreads - 1 && lastChunkSize != 0) ? lastChunkSize : normalChunkSize;
                 normalClientDataThreads[threadIndex] = new Thread(() -> {
                     try {
                         System.out.println("Normal client started thread " + finalThreadIndex);
                         // TODO: modify file size when update protocol
-                        FileHelper.receiveFile(normalDataInputStreams[finalThreadIndex], filePathBase + finalThreadIndex, fileInfo.fileSize / nThreads);
+                        FileHelper.receiveFile(normalDataInputStreams[finalThreadIndex],
+                                filePathBase + finalThreadIndex,
+                                chunkSize);
                     } catch (IOException e) {
                         e.printStackTrace();
                     }

@@ -5,7 +5,7 @@ import java.util.*;
 
 public class FileHelper {
     private static int defaultBufferSize = 1024;
-    private static String tempDirPath = "server/tmp/";
+    private static String servTempFileDir = "server/tmp/";
 
     private static int loadBufferSize() {
         try {
@@ -18,7 +18,7 @@ public class FileHelper {
         }
     }
 
-    public static int sendFile(DataOutputStream outSocket, String filepath) throws IOException {
+    public static void sendFile(DataOutputStream outSocket, String filepath) throws IOException {
         int bufferSize = loadBufferSize();
         System.out.println("FileHelper sending file: " + filepath + " with bufferSize: " + bufferSize);
         try {
@@ -33,12 +33,10 @@ public class FileHelper {
             fileInputStream.close();
         } catch (FileNotFoundException e) {
             e.printStackTrace();
-            return -1;
         }
-        return 0;
     }
 
-    public static int receiveFile(DataInputStream inpSocket, String filepath, long fileSize) throws IOException {
+    public static void receiveFile(DataInputStream inpSocket, String filepath, long fileSize) throws IOException {
         int bufferSize = loadBufferSize();
         System.out.println("FileHelper receiving file: " + filepath + " with bufferSize: " + bufferSize);
         try {
@@ -52,12 +50,10 @@ public class FileHelper {
             }
         } catch (FileNotFoundException e) {
             e.printStackTrace();
-            return -1;
         }
-        return 0;
     }
 
-    public static int forwardFile(DataInputStream inpSocket, ArrayList<DataOutputStream> forwardingSockets, String filepath, long fileSize) throws IOException {
+    public static void forwardFile(DataInputStream inpSocket, ArrayList<DataOutputStream> forwardingSockets, String filepath, long fileSize) throws IOException {
         int bufferSize = loadBufferSize();
         System.out.println("FileHelper receiving and forwarding file: " + filepath + " with bufferSize: " + bufferSize);
         // create threads to forward file through forwardingSockets
@@ -95,37 +91,38 @@ public class FileHelper {
             }
         } catch (FileNotFoundException e) {
             e.printStackTrace();
-            return -1;
         } finally {
             for (QueueThread forwarderThread : forwarderThreads) {
                 forwarderThread.kill();
             }
         }
 
-        return 0;
     }
 
     public static String[] splitFile(String filePath, int nChunks) {
         String[] chunkPaths = new String[nChunks];
-        //TODO: move to property section
+        //TODO: get bufsize from config file
         int bufSize = 1024;
         byte[] buffer = new byte[bufSize];
 
         File originFile = new File(filePath);
         try {
             FileInputStream fio = new FileInputStream(originFile);
-            int chunkSize = (int) originFile.length() / nChunks;
+            int normalChunkSize = (int) (originFile.length() / nChunks);
+            int lastChunkSize = normalChunkSize + (int) originFile.length() % nChunks;
 
             for (int chunkIndex = 0; chunkIndex < nChunks; chunkIndex++) {
-                //TODO: read and write to chunk
-                chunkPaths[chunkIndex] = tempDirPath + originFile.getName() + chunkIndex;
-                FileOutputStream chunkos = new FileOutputStream(new File(chunkPaths[chunkIndex]));
-                int bytesToRead = chunkSize;
+                chunkPaths[chunkIndex] = servTempFileDir + originFile.getName() + chunkIndex;
+                FileOutputStream chunkfos = new FileOutputStream(new File(chunkPaths[chunkIndex]));
+
+                // check if current chunk is the last chunk or not to give proper size
+                int bytesToRead = (chunkIndex == nChunks - 1 && lastChunkSize != 0) ? lastChunkSize : normalChunkSize;
+
                 while (bytesToRead > 0) {
                     int readLength = Math.min(bytesToRead, bufSize);
                     int nBytesRead = fio.read(buffer, 0, readLength);
                     bytesToRead = bytesToRead - nBytesRead;
-                    chunkos.write(buffer);
+                    chunkfos.write(buffer, 0, nBytesRead);
                 }
             }
 
