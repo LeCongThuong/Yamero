@@ -24,7 +24,7 @@ public class Controller {
             // check if all client is ready to receive file
             c1.isSuccess();
 
-            System.out.println("DEBUG: all connected");
+//            System.out.println("DEBUG: all connected");
 
             // ready to send file
             while (true) {
@@ -34,6 +34,7 @@ public class Controller {
                 File file = new File("server/" + fileName);
                 if (file.exists() && file.isFile()) {
                     long startTime = System.currentTimeMillis();
+//                    System.out.println("DEBUG: start sending at: " + startTime);
                     c1.sendFile(fileName);
                     long c1_time = c1.getFinishTime();
                     long c2_time = c2.getFinishTime();
@@ -42,9 +43,11 @@ public class Controller {
 
                     uiManager.displayMessageInline("C1 Response time: ");
                     uiManager.sendFileSuccess(c1_time - startTime);
+//                    System.out.println("DEBUG: C3 finish at " + c1_time);
 
                     uiManager.displayMessageInline("C2 Response time: ");
                     uiManager.sendFileSuccess(c2_time - startTime);
+//                    System.out.println("DEBUG: C2 finish at " + c2_time);
 
                     uiManager.displayMessageInline("C3 Response time: ");
                     uiManager.sendFileSuccess(c3_time - startTime);

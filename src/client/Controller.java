@@ -121,6 +121,9 @@ public class Controller {
             Socket[] c3DataSockets = new Socket[nThreads];
             DataOutputStream[] c3DataOutputStreams = new DataOutputStream[nThreads];
             DataOutputStream[] c2DataOutputStreams = new DataOutputStream[nThreads];
+
+            String filePathBase = "client/" + fileInfo.fileName;
+            Thread[] forwardDataThreads = new Thread[nThreads];
             for (int threadIndex = 0; threadIndex < nThreads; threadIndex++) {
 
                 forwarderDataSockets[threadIndex] = connectionHandle(getServerIp(), serverPort);
@@ -137,22 +140,39 @@ public class Controller {
                 System.out.println("DEBUG: thread " + threadIndex + " prepare to forward");
 
                 int finalThreadIndex = threadIndex;
-                new Thread(() -> {
+                forwardDataThreads[threadIndex] = new Thread(() -> {
                     try {
                         System.out.println("Forwarder started thread " + finalThreadIndex);
+                        // TODO: modify file size when update protocol
                         FileHelper.forwardFile(forwarderDataInputStreams[finalThreadIndex],
                                 new ArrayList<>(Arrays.asList(c2DataOutputStreams[finalThreadIndex], c3DataOutputStreams[finalThreadIndex])),
-                                "client/" + fileInfo.fileName,
-                                fileInfo.fileSize);
-                        long finishTime = System.currentTimeMillis();
-                        clientOutputStream.writeLong(finishTime);
+                                filePathBase + finalThreadIndex,
+                                fileInfo.fileSize / nThreads);
                         System.out.println("Receive file " + fileInfo.fileName + " successfully.");
                     } catch (IOException e) {
                         System.out.println("Error in file sending threads");
                         e.printStackTrace();
                     }
-                }).start();
+                });
 
+                forwardDataThreads[threadIndex].start();
+            }
+
+            // wait for all data thread to join, notify server time that complete sending file to forwarder
+            try {
+                for (Thread forwardDataThread : forwardDataThreads) {
+                    forwardDataThread.join();
+                }
+                System.out.println("DEBUG: Forwarder data threads completed");
+
+                // merge parts of received file
+                FileHelper.mergeFileAndClearChunks(filePathBase, nThreads);
+
+                long finishTime = System.currentTimeMillis();
+                System.out.println("DEBUG: Finish at: " + finishTime);
+                clientOutputStream.writeLong(finishTime);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
             }
         }
     }
@@ -167,6 +187,7 @@ public class Controller {
         System.out.println("Connected to C1 at " + forwarderAddress.getIp() + ":9000");
 
 
+        // file transmission loop
         while (true) {
             FileInfo fileInfo = MessageControlHelper.receiveFileInfo(c1ControlInputStream);
             if (fileInfo != null) {
@@ -187,20 +208,32 @@ public class Controller {
                 Thread.sleep(15);
             }
 
+            String filePathBase = "client/" + fileInfo.fileName;
+            Thread[] normalClientDataThreads = new Thread[nThreads];
             for (int threadIndex = 0; threadIndex < nThreads; threadIndex++) {
                 int finalThreadIndex = threadIndex;
-                new Thread(() -> {
+                normalClientDataThreads[threadIndex] = new Thread(() -> {
                     try {
                         System.out.println("Normal client started thread " + finalThreadIndex);
-                        FileHelper.receiveFile(normalDataInputStreams[finalThreadIndex], filepath + finalThreadIndex, fileInfo.fileSize);
-                        long finishTime = System.currentTimeMillis();
-                        System.out.println("Receive file " + fileInfo.fileName + " successfully.");
-                        clientOutputStream.writeLong(finishTime);
+                        // TODO: modify file size when update protocol
+                        FileHelper.receiveFile(normalDataInputStreams[finalThreadIndex], filePathBase + finalThreadIndex, fileInfo.fileSize / nThreads);
                     } catch (IOException e) {
                         e.printStackTrace();
                     }
-                }).start();
+                });
+                normalClientDataThreads[threadIndex].start();
             }
+
+            for (Thread normalClientDataThread : normalClientDataThreads)
+                normalClientDataThread.join();
+
+            // TODO: merge parts of files (path, nthreads)
+            FileHelper.mergeFileAndClearChunks(filePathBase, nThreads);
+
+            long finishTime = System.currentTimeMillis();
+            System.out.println("Receive file " + fileInfo.fileName + " successfully.");
+//            System.out.println("DEBUG: Finish at: " + finishTime);
+            clientOutputStream.writeLong(finishTime);
         }
     }
 

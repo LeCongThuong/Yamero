@@ -15,7 +15,7 @@ public class ClientConnection {
     private int port;
     private String ip;
     private static final int bufferSize = 1024;
-    private static final int nThreads = 2;
+    private static final int nThreads = 2; //TODO: add to config file
     private static String forwarderIp = null;
 
     // input
@@ -72,26 +72,42 @@ public class ClientConnection {
 
     public void sendFile(String fileName) throws SocketException {
         try {
-            // TODO: remove when done testing
-            File file = new File("server/" + fileName);
+            // TODO: modify path when done testing
+            String filePath = "server/" + fileName;
+            File file = new File(filePath);
             long fileSize = file.length();
+
+            // TODO: add # of parts(threads) to FileInfo
             MessageControlHelper.sendFileInfo(dataOutputStream, new MessageControlHelper.FileInfo(fileName, fileSize));
+
+            // TODO: splitFile() => paths  (make temp dir)
+            String[] chunkPaths = FileHelper.splitFile(filePath, nThreads);
+            System.out.println("DEBUG: split file done");
+
+            Thread[] dataThreads = new Thread[nThreads];
             for (int threadIndex = 0; threadIndex < nThreads; threadIndex++) {
                 dataSockets[threadIndex] = this.servConnection.accept();
                 DataOutputStream parallelOutputStream = new DataOutputStream(dataSockets[threadIndex].getOutputStream());
-                // TODO: handle file partitioning
-                new Thread(() -> {
+                int finalThreadIndex = threadIndex;
+                dataThreads[threadIndex] = new Thread(() -> {
                     try {
-                        FileHelper.sendFile(parallelOutputStream, "server/" + fileName);
+                        FileHelper.sendFile(parallelOutputStream, chunkPaths[finalThreadIndex]);
                     } catch (IOException e) {
                         System.out.println("Error in file sending threads");
                         e.printStackTrace();
                     }
-                }).start();
-//                FileHelper.sendFile(parallelOutputStream, fileName);
+                });
+                dataThreads[threadIndex].start();
+                // TODO: merge parts of files (path, nthreads)
+
             }
 
-        } catch (IOException e) {
+            for (Thread thread: dataThreads)
+                thread.join();
+
+            FileHelper.removeTempChunks(chunkPaths);
+
+        } catch (IOException | InterruptedException e) {
             System.out.println("Something went wrong when send file");
         }
     }
