@@ -107,6 +107,8 @@ public class FileHelper {
 
         File originFile = new File(filePath);
         try {
+            long startTime = System.currentTimeMillis();
+
             FileInputStream fio = new FileInputStream(originFile);
             int normalChunkSize = (int) (originFile.length() / nChunks);
             int lastChunkSize = normalChunkSize + (int) originFile.length() % nChunks;
@@ -125,6 +127,10 @@ public class FileHelper {
                     chunkfos.write(buffer, 0, nBytesRead);
                 }
             }
+
+            long finishTime = System.currentTimeMillis();
+            long time = finishTime - startTime;
+            System.out.println("DEBUG: split file take: " + time);
 
         } catch (IOException e) {
             e.printStackTrace();
@@ -146,6 +152,8 @@ public class FileHelper {
     }
 
     public static void mergeFileAndClearChunks(String filePathBase, int nChunks) throws IOException {
+        long startTime = System.currentTimeMillis();
+
         FileOutputStream finalFileOutputStream = new FileOutputStream(new File(filePathBase));
         int bufferSize = 1024;
         byte[] buffer = new byte[bufferSize];
@@ -169,5 +177,10 @@ public class FileHelper {
         removeTempChunks(chunkPaths);
 
         finalFileOutputStream.close();
+
+        long finishTime = System.currentTimeMillis();
+        long time = finishTime - startTime;
+        System.out.println("DEBUG: merge and remove chunks take: " + time);
+
     }
 }

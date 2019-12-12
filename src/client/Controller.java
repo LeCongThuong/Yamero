@@ -236,7 +236,7 @@ public class Controller {
             for (Thread normalClientDataThread : normalClientDataThreads)
                 normalClientDataThread.join();
 
-            // TODO: merge parts of files (path, nthreads)
+            // merge parts of files (path, nthreads)
             FileHelper.mergeFileAndClearChunks(filePathBase, nThreads);
 
             long finishTime = System.currentTimeMillis();

@@ -13,12 +13,13 @@ public class Controller {
             ServerSocket serverSocket = new ServerSocket(port);
             uiManager.serverStart(port);
 
+            int nThreads = 2;
             // wait for 3 client
-            ClientConnection c1 = new ClientConnection(1, serverSocket);
+            ClientConnection c1 = new ClientConnection(1, serverSocket, nThreads);
             uiManager.clientConnected(c1);
-            ClientConnection c2 = new ClientConnection(2, serverSocket);
+            ClientConnection c2 = new ClientConnection(2, serverSocket, nThreads);
             uiManager.clientConnected(c2);
-            ClientConnection c3 = new ClientConnection(3, serverSocket);
+            ClientConnection c3 = new ClientConnection(3, serverSocket, nThreads);
             uiManager.clientConnected(c3);
 
             // check if all client is ready to receive file
@@ -35,6 +36,7 @@ public class Controller {
                 if (file.exists() && file.isFile()) {
                     long startTime = System.currentTimeMillis();
 //                    System.out.println("DEBUG: start sending at: " + startTime);
+                    // TODO: add to config file
                     c1.sendFile(fileName);
                     long c1_time = c1.getFinishTime();
                     long c2_time = c2.getFinishTime();
@@ -43,11 +45,11 @@ public class Controller {
 
                     uiManager.displayMessageInline("C1 Response time: ");
                     uiManager.sendFileSuccess(c1_time - startTime);
-//                    System.out.println("DEBUG: C3 finish at " + c1_time);
+                    System.out.println("DEBUG: C3 finish at " + c1_time);
 
                     uiManager.displayMessageInline("C2 Response time: ");
                     uiManager.sendFileSuccess(c2_time - startTime);
-//                    System.out.println("DEBUG: C2 finish at " + c2_time);
+                    System.out.println("DEBUG: C2 finish at " + c2_time);
 
                     uiManager.displayMessageInline("C3 Response time: ");
                     uiManager.sendFileSuccess(c3_time - startTime);

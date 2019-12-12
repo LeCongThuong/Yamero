@@ -15,7 +15,7 @@ public class ClientConnection {
     private int port;
     private String ip;
     private static final int bufferSize = 1024;
-    private static final int nChunks = 2; //TODO: add to config file
+    private int nChunks = 2; //TODO: add to config file
     private static String forwarderIp = null;
 
     // input
@@ -26,9 +26,10 @@ public class ClientConnection {
     private OutputStream outputStream = null;
     private DataOutputStream dataOutputStream = null;
 
-    public ClientConnection(int clientId, ServerSocket connection) {
+    public ClientConnection(int clientId, ServerSocket connection, int nThreads) {
         this.id = clientId;
         this.servConnection = connection;
+        this.nChunks = nThreads;
         try {
             controlSocket = connection.accept();
             dataSockets = new Socket[nChunks];
