@@ -17,13 +17,14 @@ public class FileHelper {
         }
     }
 
-    public static int sendFile(DataOutputStream outSocket, String filepath) throws IOException {
+    public static int sendFile(OutputStream outputStream, String filepath) throws IOException {
         int bufferSize = loadBufferSize();
         System.out.println("FileHelper sending file: " + filepath + " with bufferSize: " + bufferSize);
+        BufferedWriter outSocket = new BufferedWriter(new OutputStreamWriter(outputStream));
         try {
             File file = new File(filepath);
-            FileInputStream fileInputStream = new FileInputStream(file);
-            byte[] buffer = new byte[bufferSize];
+            BufferedReader fileInputStream = new BufferedReader(new FileReader(file));
+            char[] buffer = new char[bufferSize];
             int nBytes;
             while ((nBytes = fileInputStream.read(buffer)) != -1) {
                 outSocket.write(buffer, 0, nBytes);
@@ -37,12 +38,15 @@ public class FileHelper {
         return 0;
     }
 
-    public static int receiveFile(DataInputStream inpSocket, String filepath, long fileSize) throws IOException {
+    public static int receiveFile(InputStream inputStream, String filepath, long fileSize) throws IOException {
         int bufferSize = loadBufferSize();
         System.out.println("FileHelper receiving file: " + filepath + " with bufferSize: " + bufferSize);
+
+        BufferedReader inpSocket = new BufferedReader(new InputStreamReader(inputStream));
+
         try {
-            FileOutputStream fileOutputStream = new FileOutputStream(filepath);
-            byte[] buffer = new byte[bufferSize];
+            BufferedWriter fileOutputStream = new BufferedWriter(new FileWriter(filepath));
+            char[] buffer = new char[bufferSize];
             long totalBytesRead = 0;
             while (totalBytesRead < fileSize) {
                 int nBytes = inpSocket.read(buffer);
@@ -56,20 +60,23 @@ public class FileHelper {
         return 0;
     }
 
-    public static int forwardFile(DataInputStream inpSocket, ArrayList<DataOutputStream> forwardingSockets, String filepath, long fileSize) throws IOException {
+    public static int forwardFile(InputStream inputStream, ArrayList<OutputStream> forwardingStreams, String filepath, long fileSize) throws IOException {
         int bufferSize = loadBufferSize();
         System.out.println("FileHelper receiving and forwarding file: " + filepath + " with bufferSize: " + bufferSize);
         // create threads to forward file through forwardingSockets
         ArrayList<QueueThread> forwarderThreads = new ArrayList<>();
-        FileOutputStream fileOutputStream;
+        BufferedWriter fileOutputStream;
+
+        BufferedReader inpSocket = new BufferedReader(new InputStreamReader(inputStream));
 
         try {
-            fileOutputStream = new FileOutputStream(filepath);
-            for (DataOutputStream forwardingSocket: forwardingSockets) {
+            fileOutputStream = new BufferedWriter(new FileWriter(filepath));
+            for (OutputStream forwardingStream: forwardingStreams) {
+                BufferedWriter forwardingSocket = new BufferedWriter(new OutputStreamWriter(forwardingStream));
                 QueueThread forwarder = new QueueThread() {
                     @Override
                     public void onQueue() {
-                        byte[] bytes = (byte[]) this.getData();
+                        char[] bytes = (char[]) this.getData();
                         try {
                             forwardingSocket.write(bytes, 0, bytes.length);
                         } catch (IOException e) {
@@ -81,7 +88,7 @@ public class FileHelper {
                 forwarderThreads.add(forwarder);
                 forwarder.start();
             }
-            byte[] buffer = new byte[bufferSize];
+            char[] buffer = new char[bufferSize];
             long totalBytesRead = 0;
 
             while (totalBytesRead < fileSize) {

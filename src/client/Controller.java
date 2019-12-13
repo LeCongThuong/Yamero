@@ -106,7 +106,7 @@ public class Controller {
             MessageControlHelper.sendFileInfo(c3OutputStream, fileInfo);
 
             // Receive and Forward file
-            FileHelper.forwardFile(dataInputStream, new ArrayList<>(Arrays.asList(c2OutputStream, c3OutputStream)), "./received/" + fileInfo.fileName, fileInfo.fileSize);
+            FileHelper.forwardFile(inputStream, new ArrayList<>(Arrays.asList(c2.getOutputStream(), c3.getOutputStream())), "./received/" + fileInfo.fileName, fileInfo.fileSize);
             long finishTime = System.currentTimeMillis();
             dataOutputStream.writeLong(finishTime);
             System.out.println("Receive file " + fileInfo.fileName + " successfully.");
@@ -125,7 +125,7 @@ public class Controller {
             FileInfo fileInfo = MessageControlHelper.receiveFileInfo(c1InputStream);
             System.out.println("Receiver " + fileInfo.fileName + " " + fileInfo.fileSize + " byte");
             String filePath = "./received/" + fileInfo.fileName;
-            FileHelper.receiveFile(c1InputStream, filePath, fileInfo.fileSize);
+            FileHelper.receiveFile(c1.getInputStream(), filePath, fileInfo.fileSize);
             long finishTime = System.currentTimeMillis();
             dataOutputStream.writeLong(finishTime);
             System.out.println("Receive file " + fileInfo.fileName + " successfully.");

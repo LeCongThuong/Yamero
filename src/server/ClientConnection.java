@@ -64,7 +64,7 @@ public class ClientConnection {
             File file = new File(fileName);
             long fileSize = file.length();
             MessageControlHelper.sendFileInfo(dataOutputStream, new MessageControlHelper.FileInfo(fileName, fileSize));
-            FileHelper.sendFile(dataOutputStream, fileName);
+            FileHelper.sendFile(outputStream, fileName);
         } catch (IOException e) {
             System.out.println("Something went wrong when send file");
         }
