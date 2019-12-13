@@ -26,8 +26,8 @@ public class FileHelper {
             int nBytes;
             while ((nBytes = fileInputStream.read(buffer)) != -1) {
                 outSocket.write(buffer, 0, nBytes);
-                outSocket.flush();
             }
+            outSocket.flush();
             fileInputStream.close();
         } catch (FileNotFoundException e) {
             e.printStackTrace();
