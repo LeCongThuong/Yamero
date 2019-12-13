@@ -20,11 +20,12 @@ public class Controller {
     // input utils
     private static InputStream inputStream = null;
     private static DataInputStream dataInputStream = null;
+    private static BufferedInputStream bufferedInputStream = null;
 
     // output utils
     private static OutputStream outputStream = null;
     private static DataOutputStream dataOutputStream = null;
-
+    private static BufferedOutputStream bufferedOutputStream = null;
 
     public static void main(String[] args) {
         try {
@@ -33,10 +34,12 @@ public class Controller {
             // Input init
             inputStream = socket.getInputStream();
             dataInputStream = new DataInputStream(inputStream);
+            bufferedInputStream = new BufferedInputStream(inputStream);
 
             // Output init
             outputStream = socket.getOutputStream();
             dataOutputStream = new DataOutputStream(outputStream);
+            bufferedOutputStream = new BufferedOutputStream(outputStream);
 
             // receive forwarder ip
             forwarderIp = MessageControlHelper.receiveForwarderNotify(dataInputStream);
@@ -88,12 +91,14 @@ public class Controller {
         ClientAddress c2Address = new ClientAddress(c2);
         System.out.println("C2(" + c2Address.getIp() + ":" + c2Address.getPort() + ") connected");
         DataOutputStream c2OutputStream = new DataOutputStream(c2.getOutputStream());
+        BufferedOutputStream c2BufferedOutputStream = new BufferedOutputStream(c2.getOutputStream());
 
         // connect c3
         Socket c3 = serverSocket.accept();
         ClientAddress c3Address = new ClientAddress(c3);
         System.out.println("C3(" + c3Address.getIp() + ":" + c3Address.getPort() + ") connected");
         DataOutputStream c3OutputStream = new DataOutputStream(c3.getOutputStream());
+        BufferedOutputStream c3BufferedOutputStream = new BufferedOutputStream(c3.getOutputStream());
 
         // all client ready to receive file
         dataOutputStream.writeBoolean(true);
@@ -106,7 +111,11 @@ public class Controller {
             MessageControlHelper.sendFileInfo(c3OutputStream, fileInfo);
 
             // Receive and Forward file
-            FileHelper.forwardFile(dataInputStream, new ArrayList<>(Arrays.asList(c2OutputStream, c3OutputStream)), "./received/" + fileInfo.fileName, fileInfo.fileSize);
+            FileHelper.forwardFile(
+                    bufferedInputStream,
+                    new ArrayList<>(Arrays.asList(c2BufferedOutputStream, c3BufferedOutputStream)),
+                    "./received/" + fileInfo.fileName, fileInfo.fileSize
+            );
             long finishTime = System.currentTimeMillis();
             dataOutputStream.writeLong(finishTime);
             System.out.println("Receive file " + fileInfo.fileName + " successfully.");
@@ -119,13 +128,14 @@ public class Controller {
         ClientAddress c1Address = new ClientAddress(c1);
         System.out.println("Connected to C1 at " + c1Address.getIp() + ":9000");
         DataInputStream c1InputStream = new DataInputStream(c1.getInputStream());
+        BufferedInputStream c1BufferedInputStream = new BufferedInputStream(c1.getInputStream());
 
         while (true) {
             // receive file when forwarded
             FileInfo fileInfo = MessageControlHelper.receiveFileInfo(c1InputStream);
             System.out.println("Receiver " + fileInfo.fileName + " " + fileInfo.fileSize + " byte");
             String filePath = "./received/" + fileInfo.fileName;
-            FileHelper.receiveFile(c1InputStream, filePath, fileInfo.fileSize);
+            FileHelper.receiveFile(c1BufferedInputStream, filePath, fileInfo.fileSize);
             long finishTime = System.currentTimeMillis();
             dataOutputStream.writeLong(finishTime);
             System.out.println("Receive file " + fileInfo.fileName + " successfully.");

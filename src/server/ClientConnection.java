@@ -17,10 +17,12 @@ public class ClientConnection {
     // input
     private InputStream inputStream = null;
     private DataInputStream dataInputStream = null;
+    private BufferedInputStream bufferedInputStream = null;
 
     // output
     private OutputStream outputStream = null;
     private DataOutputStream dataOutputStream = null;
+    private BufferedOutputStream bufferedOutputStream = null;
 
     public ClientConnection(int clientId, Socket connection) {
         id = clientId;
@@ -31,10 +33,12 @@ public class ClientConnection {
             // Input init
             inputStream = socket.getInputStream();
             dataInputStream = new DataInputStream(inputStream);
+            bufferedInputStream = new BufferedInputStream(socket.getInputStream());
 
             // Output init
             outputStream = socket.getOutputStream();
             dataOutputStream = new DataOutputStream(outputStream);
+            bufferedOutputStream = new BufferedOutputStream(socket.getOutputStream());
 
             // the first client connect to server will be forwarder
             if (forwarderIp == null) {
@@ -59,12 +63,12 @@ public class ClientConnection {
         return dataInputStream.readBoolean();
     }
 
-    public void sendFile(String fileName) throws SocketException {
+    public void sendFile(String fileName) {
         try {
             File file = new File(fileName);
             long fileSize = file.length();
             MessageControlHelper.sendFileInfo(dataOutputStream, new MessageControlHelper.FileInfo(fileName, fileSize));
-            FileHelper.sendFile(dataOutputStream, fileName);
+            FileHelper.sendFile(bufferedOutputStream, fileName);
         } catch (IOException e) {
             System.out.println("Something went wrong when send file");
         }
